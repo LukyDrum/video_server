@@ -62,13 +62,13 @@ async fn upload(State(state): State<ServerState>, request: Request) -> () {
     // Convert body to stream
     let mut stream = request.into_body().into_data_stream();
 
-    // Get new segment in storage object
-    let segment = state.obj.new_file(file);
-    // Loop trough stream, wait for bytes and add the bytes to last segment
+    // Get new file in storage object
+    let file = state.obj.new_file(file);
+    // Loop trough stream, wait for bytes and add the bytes to file
     loop {
         if let Some(Ok(bytes)) = stream.next().await {
-            // Get write lock for segment
-            let mut write = segment.write().unwrap();
+            // Get write lock for file
+            let mut write = file.write().unwrap();
             write.push(bytes);
         } else {
             break;
@@ -79,4 +79,5 @@ async fn upload(State(state): State<ServerState>, request: Request) -> () {
 async fn stream(State(state): State<ServerState>, Path(path): Path<String>) -> () {
     let (path, file) = path_to_parts(&path);
     
+
 }
