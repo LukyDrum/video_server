@@ -6,19 +6,19 @@ use std::{
 use axum::body::Bytes;
 
 #[derive(Clone)]
-pub(crate) struct Segment {
+pub(crate) struct File {
     chunks: Vec<Bytes>,
 }
 
-type SegmentLock = Arc<RwLock<Segment>>;
+type FileLock = Arc<RwLock<File>>;
 
-impl Segment {
+impl File {
     pub fn new() -> Self {
-        Segment { chunks: Vec::new() }
+        File { chunks: Vec::new() }
     }
 
-    pub fn new_lock() -> SegmentLock {
-        Arc::new(RwLock::new(Segment::new()))
+    pub fn new_lock() -> FileLock {
+        Arc::new(RwLock::new(File::new()))
     }
 
     pub fn push(&mut self, chunk: Bytes) -> () {
@@ -29,32 +29,32 @@ impl Segment {
 #[derive(Clone)]
 pub(crate) struct StorageObject {
     path: String,
-    segments: Arc<RwLock<HashMap<String, SegmentLock>>>,
+    files: Arc<RwLock<HashMap<String, FileLock>>>,
 }
 
 impl StorageObject {
     pub fn new(path: String) -> Self {
         StorageObject {
             path,
-            segments: Arc::new(RwLock::new(HashMap::new())),
+            files: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
-    /// Creates a new segment with `filename`. If such segment already exists, it will be
+    /// Creates a new file with `filename`. If such file already exists, it will be
     /// overwritten.
     ///
-    /// Returns `SegmentLock`, a.k.a.: `Arc<RwLock<Segment>>`
-    pub fn new_segment(&self, filename: String) -> SegmentLock {
-        let mut segments = self.segments.write().unwrap();
-        segments.insert(filename.clone(), Segment::new_lock());
+    /// Returns `FileLock`, a.k.a.: `Arc<RwLock<File>>`
+    pub fn new_file(&self, filename: String) -> FileLock {
+        let mut files = self.files.write().unwrap();
+        files.insert(filename.clone(), File::new_lock());
 
-        segments.get(&filename).unwrap().clone()
+        files.get(&filename).unwrap().clone()
     }
 
-    pub fn get_segment(&self, filename: &String) -> Option<SegmentLock> {
-        let segments = self.segments.read().unwrap();
-        match segments.get(filename) {
-            Some(sl) => Some(sl.clone()),
+    pub fn get_file(&self, filename: &String) -> Option<FileLock> {
+        let files = self.files.read().unwrap();
+        match files.get(filename) {
+            Some(fl) => Some(fl.clone()),
             None => None,
         }
     }
