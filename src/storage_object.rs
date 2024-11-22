@@ -8,13 +8,17 @@ use axum::body::Bytes;
 #[derive(Clone)]
 pub(crate) struct File {
     chunks: Vec<Bytes>,
+    is_complete: bool,
 }
 
 type FileLock = Arc<RwLock<File>>;
 
 impl File {
     pub fn new() -> Self {
-        File { chunks: Vec::new() }
+        File {
+            chunks: Vec::new(),
+            is_complete: false,
+        }
     }
 
     pub fn new_lock() -> FileLock {
@@ -23,6 +27,10 @@ impl File {
 
     pub fn push(&mut self, chunk: Bytes) -> () {
         self.chunks.push(chunk);
+    }
+
+    pub fn set_as_complete(&mut self) -> () {
+        self.is_complete = true;
     }
 }
 
