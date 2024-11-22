@@ -1,7 +1,9 @@
-use std::sync::{Arc, RwLock};
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
 
 use axum::body::Bytes;
-
 
 #[derive(Clone)]
 pub(crate) struct Segment {
@@ -21,44 +23,39 @@ impl Segment {
 
     pub fn push(&mut self, chunk: Bytes) -> () {
         self.chunks.push(chunk);
-        println!("Pushed chunk!");
     }
 }
 
 #[derive(Clone)]
 pub(crate) struct StorageObject {
     path: String,
-    metadata: Arc<RwLock<Option<Bytes>>>,
-    segments: Arc<RwLock<Vec<SegmentLock>>>,
+    segments: Arc<RwLock<HashMap<String, SegmentLock>>>,
 }
 
 impl StorageObject {
     pub fn new(path: String) -> Self {
         StorageObject {
             path,
-            metadata: Arc::new(RwLock::new(None)),
-            segments: Arc::new(RwLock::new(Vec::new())),
+            segments: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
-    pub fn update_meta(&self, bytes: Bytes) -> () {
-        let mut meta = self.metadata.write().unwrap();
-        meta.replace(bytes);
-    }
-
-    pub fn new_segment(&self) -> SegmentLock {
+    /// Creates a new segment with `filename`. If such segment already exists, it will be
+    /// overwritten.
+    ///
+    /// Returns `SegmentLock`, a.k.a.: `Arc<RwLock<Segment>>`
+    pub fn new_segment(&self, filename: String) -> SegmentLock {
         let mut segments = self.segments.write().unwrap();
-        segments.push(Segment::new_lock());
+        segments.insert(filename.clone(), Segment::new_lock());
 
-        segments.last().unwrap().clone()
+        segments.get(&filename).unwrap().clone()
     }
 
-    pub fn get_segment(&self, index: usize) -> Option<SegmentLock> {
+    pub fn get_segment(&self, filename: &String) -> Option<SegmentLock> {
         let segments = self.segments.read().unwrap();
-       
-        match segments.get(index) {
+        match segments.get(filename) {
             Some(sl) => Some(sl.clone()),
-            None => None
+            None => None,
         }
     }
 }
