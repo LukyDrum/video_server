@@ -6,7 +6,7 @@ use axum::{
     extract::{Request, State},
     http::StatusCode,
     response::{Html, IntoResponse},
-    routing::{get, put},
+    routing::{delete, get, put},
     Router,
 };
 
@@ -28,10 +28,6 @@ impl ServerState {
     }
 }
 
-fn not_found() -> (StatusCode, Body) {
-    (StatusCode::NOT_FOUND, Body::from("File not Found"))
-}
-
 #[tokio::main]
 async fn main() {
     // Init state
@@ -44,6 +40,7 @@ async fn main() {
         .route("/", get(root))
         .route("/*filename", put(upload))
         .route("/*filename", get(stream))
+        .route("/*filename", delete(file_delete))
         .layer(ServiceBuilder::new().layer(cors_layer))
         .with_state(state);
 
@@ -88,6 +85,14 @@ async fn stream(
     let path = request.uri().path().to_string();
     match state.obj.get_filestream(&path) {
         Some(stream) => (StatusCode::OK, Body::from_stream(stream)),
-        None => not_found(),
+        None => (StatusCode::NOT_FOUND, Body::from("File not found")),
+    }
+}
+
+async fn file_delete(State(state): State<ServerState>, request: Request) -> impl IntoResponse {
+    let path = request.uri().path().to_string();
+    match state.obj.delete_file(&path) {
+        Ok(_) => StatusCode::OK,
+        Err(_) => StatusCode::NOT_FOUND
     }
 }
