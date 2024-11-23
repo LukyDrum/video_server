@@ -28,6 +28,10 @@ impl ServerState {
     }
 }
 
+fn not_found() -> (StatusCode, Body) {
+    (StatusCode::NOT_FOUND, Body::from("File not Found"))
+}
+
 #[tokio::main]
 async fn main() {
     // Init state
@@ -74,7 +78,7 @@ async fn upload(State(state): State<ServerState>, request: Request) -> impl Into
         write.push(bytes);
     }
 
-    (StatusCode::OK, Body::empty())
+    StatusCode::OK
 }
 
 async fn stream(
@@ -84,6 +88,6 @@ async fn stream(
     let path = request.uri().path().to_string();
     match state.obj.get_filestream(&path) {
         Some(stream) => (StatusCode::OK, Body::from_stream(stream)),
-        None => (StatusCode::NOT_FOUND, Body::empty()),
+        None => not_found(),
     }
 }
