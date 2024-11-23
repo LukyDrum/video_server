@@ -75,7 +75,7 @@ async fn upload(State(state): State<ServerState>, request: Request) -> impl Into
         write.push(bytes);
     }
 
-    StatusCode::OK
+    StatusCode::CREATED
 }
 
 async fn stream(
@@ -92,7 +92,7 @@ async fn stream(
 async fn file_delete(State(state): State<ServerState>, request: Request) -> impl IntoResponse {
     let path = request.uri().path().to_string();
     match state.obj.delete_file(&path) {
-        Ok(_) => StatusCode::OK,
+        Ok(_) => StatusCode::NO_CONTENT,
         Err(_) => StatusCode::NOT_FOUND
     }
 }
