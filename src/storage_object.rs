@@ -31,10 +31,7 @@ impl StorageObject {
     /// Return `Some(Filestream)` if such file exists else return None
     pub fn get_filestream(&self, filename: &String) -> Option<FileStream> {
         let files = self.files.read().unwrap();
-        match files.get(filename) {
-            Some(fl) => Some(FileStream::new(fl.clone())),
-            None => None,
-        }
+        files.get(filename).map(|fl| FileStream::new(fl.clone()))
     }
 
     pub fn delete_file(&self, filename: &String) -> Result<(), ()> {

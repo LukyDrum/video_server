@@ -29,7 +29,7 @@ impl File {
         Arc::new(RwLock::new(File::new()))
     }
 
-    pub fn push(&mut self, chunk: Bytes) -> () {
+    pub fn push(&mut self, chunk: Bytes) {
         self.chunks.push(chunk);
         self.last_update = Instant::now();
     }
@@ -74,7 +74,7 @@ impl Stream for FileStream {
             // Wrap chunk in Poll::Ready and increase index for next chunk
             let res = Poll::Ready(Some(Ok(file.get_chunks()[*index].clone())));
             *index += 1;
-            return res;
+            res
         } else {
             // Check how long since the file was updated
             let since = Instant::now().duration_since(file.last_update);
@@ -83,7 +83,7 @@ impl Stream for FileStream {
             }
             // Schedule waking
             _cx.waker().wake_by_ref();
-            return Poll::Pending;
+            Poll::Pending
         }
     }
 }
