@@ -12,6 +12,7 @@ use futures::Stream;
 #[derive(Clone)]
 pub(crate) struct File {
     chunks: Vec<Bytes>,
+    is_complete: bool,
     last_update: Instant,
 }
 
@@ -21,6 +22,7 @@ impl File {
     pub fn new() -> Self {
         File {
             chunks: Vec::new(),
+            is_complete: false,
             last_update: Instant::now(),
         }
     }
@@ -36,6 +38,10 @@ impl File {
 
     pub fn get_chunks(&self) -> &Vec<Bytes> {
         &self.chunks
+    }
+    
+    pub fn set_as_complete(&mut self) {
+        self.is_complete = true;
     }
 }
 
@@ -78,7 +84,8 @@ impl Stream for FileStream {
         } else {
             // Check how long since the file was updated
             let since = Instant::now().duration_since(file.last_update);
-            if since.as_millis() > FILE_TIMEOUT {
+            // Stop stream if the file is complete or the file timeout is met
+            if file.is_complete || since.as_millis() > FILE_TIMEOUT {
                 return Poll::Ready(None);
             }
             // Schedule waking

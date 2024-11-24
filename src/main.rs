@@ -75,6 +75,9 @@ async fn upload(State(state): State<ServerState>, request: Request) -> impl Into
         write.push(bytes);
     }
 
+    let mut fl = file.write().unwrap();
+    fl.set_as_complete();
+
     StatusCode::CREATED
 }
 
